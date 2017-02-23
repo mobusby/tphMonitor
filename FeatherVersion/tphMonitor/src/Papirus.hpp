@@ -47,7 +47,7 @@ public:
     enum { SMALL, MEDIUM, LARGE };
 
     static EPD_GFX epd_gfx;
-    
+
 private:
     static EPD_Class EPD;
     // static const GFXfont *smallFont;
