@@ -21,8 +21,17 @@ public:
     float bmp280PressureAltitudeM;
     float bmp280PressureAltitudeFt;
     int si7021Humidity;
+    DataPoint(Sensors *s, DateTime dt) {
+        dateTime = dt;
+        init(s);
+    }
     DataPoint(Sensors *s) {
         dateTime = s->getDateTime();
+        init(s);
+    }
+
+private:
+    void init(Sensors *s) {
         batteryVoltage = s->getBatteryVoltage();
         bmp280TemperatureC = s->getBMP280Temperature_C();
         si7021TemperatureC = s->getSi7021Temperature_C();
