@@ -23,7 +23,7 @@
 // #include <RTClib.h>
 
 // everything in DEBUG.h is only included if DEBUG is defined
-#define DEBUG
+// #define DEBUG
 #include <DEBUG.h>
 
 #include "Sensors.hpp"
