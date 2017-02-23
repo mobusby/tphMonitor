@@ -23,7 +23,7 @@
 // #include <RTClib.h>
 
 // everything in DEBUG.h is only included if DEBUG is defined
-// #define DEBUG
+#define DEBUG
 #include <DEBUG.h>
 
 #include "Sensors.hpp"
@@ -64,12 +64,11 @@ void setup() {
     // initialize all the sensors
     sensors = new Sensors();
 
-    // initialize the Papirus display
-    papirus = new Papirus(sensors->getTemperature_C());
-
     // initialize the log file -- do this after initilizing the display, but before writing to the display to avoid weird bugs
     logFile = LogFile::initSdLogFile(sensors, NULL, true);
 
+    // initialize the Papirus display
+    papirus = new Papirus(sensors->getTemperature_C());
     papirus->addBorder();
 
     // record the first data point without delay
@@ -77,20 +76,22 @@ void setup() {
     recordDataPoint(dp, logFile);
     displayDataPoint(dp);
 
-    // wait until just before the top of the minute to continue logging
+    // wait until just before the top of the next cycle to continue logging
     // (allow a second to move into the loop() function)
-    // blink the LED to indicate waiting
+    // blink the LED to indicate waiting when in DEBUG mode
+    DEBUGPRINT("Waiting until the start of the next interval in ");
+    DEBUGPRINT(LOGINTERVAL - ((sensors->getDateTime().secondstime() + 1) % LOGINTERVAL));
+    DEBUGPRINTLN("s");
     while ((sensors->getDateTime().secondstime() + 1) % LOGINTERVAL) {
+        #ifdef DEBUG
         digitalWrite(LED_BUILTIN, HIGH);
         delay(50);
         digitalWrite(LED_BUILTIN, LOW);
         delay(50);
+        #endif
     }
 
     nextPoint = new DateTime(sensors->getDateTime() + (TimeSpan) 1);
-
-    DEBUGPRINT("nextPoint = ");
-    DEBUGPRINTLN(nextPoint->secondstime());
 }
 
 void loop() {
@@ -99,7 +100,7 @@ void loop() {
     digitalWrite(LED_BUILTIN, HIGH);
 
     while (sensors->getDateTime().secondstime() < nextPoint->secondstime())
-        delay(100);
+        delay(10); // catch the top of the cycle
 
     DataPoint dp(sensors);
     recordDataPoint(dp, logFile);
@@ -111,11 +112,17 @@ void loop() {
     DateTime *oldPoint = nextPoint;
     nextPoint = new DateTime(*oldPoint + (TimeSpan) LOGINTERVAL);
     delete oldPoint;
-    delay(LOGINTERVAL * 1000 - 500); // loop a half-second early
+    DEBUGPRINT("nextPoint = ");
+    DEBUGPRINTLN(nextPoint->secondstime());
+    DEBUGPRINT("Waiting ");
+    DEBUGPRINT(nextPoint->secondstime() - sensors->getDateTime().secondstime());
+    DEBUGPRINTLN("s until next loop");
+    delay((nextPoint->secondstime() - sensors->getDateTime().secondstime()) * 1000 - 100); // loop 0.1 second early
+    // #endif
 }
 
 void recordDataPoint(const DataPoint &dataPoint, LogFile *logfile) {
-    DEBUGPRINTLN("recordDataPoint()");
+    // DEBUGPRINTLN("recordDataPoint()");
 
     // print data to Serial for debugging
     DEBUGPRINT(dataPoint.dateTime.secondstime());
@@ -136,7 +143,7 @@ void recordDataPoint(const DataPoint &dataPoint, LogFile *logfile) {
     // write data to SD Card, light up the LED during write
     logfile->resetSPI();
     if (logfile->stream.good()) {
-        DEBUGPRINTLN("recordDataPoint() -- good stream");
+        // DEBUGPRINTLN("recordDataPoint() -- good stream");
         printDateTimeToFile(dataPoint.dateTime, logfile->stream);
         logfile->stream << " | ";
         logfile->stream << dataPoint.batteryVoltage;
@@ -156,14 +163,12 @@ void recordDataPoint(const DataPoint &dataPoint, LogFile *logfile) {
         logfile->stream << flush; // force writing
         digitalWrite(SDLED, LOW);
     }
-    DEBUGPRINTLN("DONE!");
 }
 
 void printDateTimeToFile(const DateTime &dt, ofstream &stream) {
-    DEBUGPRINTLN("printDateTimeToFile()");
+    // DEBUGPRINTLN("printDateTimeToFile()");
 
     stream << dt.year() << ".";
-    DEBUGPRINTLN("HERE!");
 
     if (dt.month() < 10) stream << "0";
     stream << (int) dt.month() << ".";
@@ -182,7 +187,7 @@ void printDateTimeToFile(const DateTime &dt, ofstream &stream) {
 }
 
 void displayDataPoint(const DataPoint &dp) {
-    DEBUGPRINTLN("displayDataPoint()");
+    // DEBUGPRINTLN("displayDataPoint()");
 
     static int tempX = 60, presX = 126, humX = 192;
     static float tempMin = 999999, presMin = 999999, humMin = 999999;
@@ -196,8 +201,8 @@ void displayDataPoint(const DataPoint &dp) {
     if (dp.bmp280Pressure < presMin) presMin = dp.bmp280Pressure;
     if (dp.si7021Humidity < humMin) humMin = dp.si7021Humidity;
 
-    char headerStr[sizeof("YYYY.MM.DD, HH:MM+SS Z || +X.XXV")];
-    snprintf(headerStr, sizeof(headerStr), "%04u.%02u.%02u, %02u:%02u+%02u Z || +%1u.%02uV",
+    char headerStr[sizeof("YYYY.MM.DD, HH:MM+SS L    +X.XXV")];
+    snprintf(headerStr, sizeof(headerStr), "%04u.%02u.%02u, %02u:%02u+%02u L    +%1u.%02uV",
         (unsigned int) dp.dateTime.year(),
         (unsigned int) dp.dateTime.month(),
         (unsigned int) dp.dateTime.day(),
@@ -208,6 +213,8 @@ void displayDataPoint(const DataPoint &dp) {
         (unsigned int) ((dp.batteryVoltage * 1000. - ((int) dp.batteryVoltage) * 1000) / 10.));
 
     papirus->addText(5, 3, headerStr, 1);
+
+    papirus->epd_gfx.drawLine(0, 11, 200, 11, EPD_GFX::BLACK);
 
     // papirus->addText(5, 5 + 14 * 3, "Temp [F]", 1);
     papirus->addText(1 + 2, 14, " Temp [F]", 1);
