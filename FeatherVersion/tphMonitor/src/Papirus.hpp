@@ -46,9 +46,10 @@ public:
 
     enum { SMALL, MEDIUM, LARGE };
 
+    static EPD_GFX epd_gfx;
+    
 private:
     static EPD_Class EPD;
-    static EPD_GFX epd_gfx;
     // static const GFXfont *smallFont;
     // static const GFXfont *bigFont;
 
@@ -85,12 +86,21 @@ void Papirus::setupEPD(int temperature) {
 	digitalWrite(Pin_EPD_CS, LOW);
 	digitalWrite(Pin_EPD_FLASH_CS, HIGH);
 
+    DEBUGPRINT("calling EPD_FLASH.begin(Pin_EPD_FLASH_CS = ");
+    DEBUGPRINT(Pin_EPD_FLASH_CS);
+    DEBUGPRINT(")...");
     EPD_FLASH.begin(Pin_EPD_FLASH_CS);
+    DEBUGPRINTLN(" Done!");
 
     // clear(temperature);
-
+    DEBUGPRINT("calling epd_gfx.begin(temperature = ");
+    DEBUGPRINT(temperature);
+    DEBUGPRINT(")...");
     epd_gfx.begin(temperature);
+    DEBUGPRINTLN(" Done!");
+    DEBUGPRINT("calling epd_gfx.setRotation(2)...");
     epd_gfx.setRotation(2);
+    DEBUGPRINTLN(" Done!");
 
     #ifdef DEBUG
 	Serial.println();
@@ -133,12 +143,12 @@ void Papirus::setupEPD(int temperature) {
 }
 
 void Papirus::addBorder(int x, int y, int w, int h, int bw) {
-    DEBUGPRINTLN("Papirus::addBorder(int x, int y, int w, int h, int bw)");
-    DEBUGPRINTLN(x);
-    DEBUGPRINTLN(y);
-    DEBUGPRINTLN(w);
-    DEBUGPRINTLN(h);
-    DEBUGPRINTLN(bw);
+    // DEBUGPRINTLN("Papirus::addBorder(int x, int y, int w, int h, int bw)");
+    // DEBUGPRINTLN(x);
+    // DEBUGPRINTLN(y);
+    // DEBUGPRINTLN(w);
+    // DEBUGPRINTLN(h);
+    // DEBUGPRINTLN(bw);
 
     if (! w) w = epd_gfx.width();
     if (! h) h = epd_gfx.height();
@@ -153,11 +163,11 @@ void Papirus::addText(int x, int y, const char *text, int fontSize) {
     // for (unsigned int i = 0; i < sizeof(text) - 1; i++, x += 3 * fontSize) {
     //     epd_gfx.drawChar(x, y, text[i], EPD_GFX::BLACK, EPD_GFX::WHITE, fontSize);
     // }
-    DEBUGPRINTLN("Papirus::addText(int x, int y, const char *text, int fontSize)");
-    DEBUGPRINTLN(x);
-    DEBUGPRINTLN(y);
-    DEBUGPRINTLN(text);
-    DEBUGPRINTLN(fontSize);
+    // DEBUGPRINTLN("Papirus::addText(int x, int y, const char *text, int fontSize)");
+    // DEBUGPRINTLN(x);
+    // DEBUGPRINTLN(y);
+    // DEBUGPRINTLN(text);
+    // DEBUGPRINTLN(fontSize);
 
     epd_gfx.setFont();
     epd_gfx.setCursor(x, y);
@@ -168,11 +178,11 @@ void Papirus::addText(int x, int y, const char *text, int fontSize) {
 }
 
 void Papirus::rmText(int x, int y, char *text, int fontSize) {
-    DEBUGPRINTLN("Papirus::rmText(int x, int y, char *text, int fontSize)");
-    DEBUGPRINTLN(x);
-    DEBUGPRINTLN(y);
-    DEBUGPRINTLN(text);
-    DEBUGPRINTLN(fontSize);
+    // DEBUGPRINTLN("Papirus::rmText(int x, int y, char *text, int fontSize)");
+    // DEBUGPRINTLN(x);
+    // DEBUGPRINTLN(y);
+    // DEBUGPRINTLN(text);
+    // DEBUGPRINTLN(fontSize);
 
     int16_t x1 = 0, y1 = 0;
     uint16_t width = 0, height = 0;
@@ -186,15 +196,15 @@ void Papirus::rmText(int x, int y, char *text, int fontSize) {
 
 void Papirus::addVertScale(const int x, float min, float max, float major, float minor,
     float value, float lowVal, float highVal) {
-    DEBUGPRINTLN("Papirus::addVertScale(int x, float min, float max, float major, float minor, float value, float lowVale, float highVal)");
-    DEBUGPRINTLN(x);
-    DEBUGPRINTLN(min);
-    DEBUGPRINTLN(max);
-    DEBUGPRINTLN(major);
-    DEBUGPRINTLN(minor);
-    DEBUGPRINTLN(value);
-    DEBUGPRINTLN(lowVal);
-    DEBUGPRINTLN(highVal);
+    // DEBUGPRINTLN("Papirus::addVertScale(int x, float min, float max, float major, float minor, float value, float lowVale, float highVal)");
+    // DEBUGPRINTLN(x);
+    // DEBUGPRINTLN(min);
+    // DEBUGPRINTLN(max);
+    // DEBUGPRINTLN(major);
+    // DEBUGPRINTLN(minor);
+    // DEBUGPRINTLN(value);
+    // DEBUGPRINTLN(lowVal);
+    // DEBUGPRINTLN(highVal);
 
     if (min > max) {
         DEBUGPRINTLN("min > max");
@@ -222,8 +232,8 @@ void Papirus::addVertScale(const int x, float min, float max, float major, float
     else if (value < min) value = min;
 
     int barHeight = (value - min) * pxScale;
-    DEBUGPRINT("barHeight = ");
-    DEBUGPRINTLN(barHeight);
+    // DEBUGPRINT("barHeight = ");
+    // DEBUGPRINTLN(barHeight);
 
     epd_gfx.fillRect(x + 1, bottom - heightPx, barWidth, heightPx, EPD_GFX::WHITE); // empty the thermometer
     epd_gfx.fillRect(x + 1, bottom - barHeight, barWidth, barHeight, EPD_GFX::BLACK); // fill the thermometer
@@ -252,8 +262,8 @@ void Papirus::addVertScale(const int x, float min, float max, float major, float
 }
 
 char *Papirus::valToString(float val) {
-    DEBUGPRINTLN("Papirus::valToString(float val)");
-    DEBUGPRINTLN(val);
+    // DEBUGPRINTLN("Papirus::valToString(float val)");
+    // DEBUGPRINTLN(val);
 
     int strSize = sizeof("-XXX.XXX");
     char *valStr = new char[strSize];
@@ -264,11 +274,11 @@ char *Papirus::valToString(float val) {
 }
 
 void Papirus::partialUpdate() {
-    DEBUGPRINTLN("Papirus::partialUpdate()");
+    // DEBUGPRINTLN("Papirus::partialUpdate()");
 }
 
 void Papirus::fullUpdate(int temperature) {
-    DEBUGPRINTLN("Papirus::fullUpdate()");
+    // DEBUGPRINTLN("Papirus::fullUpdate()");
 
     epd_gfx.display(temperature);
 }
