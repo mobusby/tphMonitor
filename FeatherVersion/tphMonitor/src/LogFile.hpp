@@ -50,6 +50,7 @@ bool LogFile::callbackSet = false;
 
 // Static function that creates the file
 LogFile *LogFile::initSdLogFile(Sensors *sensors, SdFat *sd, bool useLongFileName) {
+    DEBUGPRINTLN("LogFile::initSdLogFile()");
     LogFile::sensors = sensors;
 
     if (sd == NULL) {
@@ -60,6 +61,7 @@ LogFile *LogFile::initSdLogFile(Sensors *sensors, SdFat *sd, bool useLongFileNam
 
         #ifdef DEBUG
         sd->errorPrint();
+        DEBUGPRINTLN("0x19 (init not called) is ok here, will be called later");
         #endif // DEBUG
     }
 
@@ -70,8 +72,13 @@ LogFile *LogFile::initSdLogFile(Sensors *sensors, SdFat *sd, bool useLongFileNam
 
     while (! sd->begin(CARDSELECT, SPI_HALF_SPEED)) {
         #ifdef DEBUG
-        DEBUGPRINTLN("Could not intialize SD Card, trying again, forever, until intitialized.");
+        static int attempts = 1;
+        DEBUGPRINT("Could not intialize SD Card after ");
+        DEBUGPRINT(attempts++);
+        DEBUGPRINTLN(" attempt(s), trying again, forever, until intitialized.");
         sd->errorPrint();
+        DEBUGPRINTLN("    0x1 = timeout error for command CMD0 (initialize card in SPI mode)");
+        DEBUGPRINTLN("    0x5 = card returned an error response for CMD18 (read multiple block)");
         #endif // DEBUG
     }
 
